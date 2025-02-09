@@ -1133,7 +1133,7 @@ int ogs_sbi_parse_request(
                         ogs_sbi_parse_plmn_id(
                                 &message->param.tai.plmn_id, tai->plmn_id);
                         message->param.tai.tac =
-                            ogs_uint24_from_string(tai->tac);
+                            ogs_uint24_from_string_hexadecimal(tai->tac);
                         message->param.tai_presence = true;
                         OpenAPI_tai_free(tai);
                     }
