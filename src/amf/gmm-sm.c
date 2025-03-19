@@ -36,22 +36,19 @@
 #define OGS_LOG_DOMAIN __gmm_log_domain
 
 #define AMF_RESTORE_CONTEXT_ON_FAILURE(amf_ue, s) do {                  \
-    if ((amf_ue)->can_restore_security_context) {                       \
-        /* Restore security context if allowed */                       \
-        amf_restore_security_context((amf_ue),                          \
-                                     &((amf_ue)->sec_backup));          \
+    if ((amf_ue)->can_restore_context) {                                \
+        /* Restore context if allowed */                                \
+        amf_ue_restore_memento((amf_ue), &((amf_ue)->memento));  \
         (amf_ue)->security_context_available = 1;                       \
         (amf_ue)->mac_failed = 0;                                       \
         OGS_FSM_TRAN((s), &gmm_state_registered);                       \
         ogs_warn("[%s] Failure in transaction; restoring context and "  \
-                 "transitioning to REGISTERED.",                        \
-                 (amf_ue)->supi);                                       \
+                 "transitioning to REGISTERED.", (amf_ue)->supi);       \
     } else {                                                            \
         /* Transition to exception state if not allowed */              \
         OGS_FSM_TRAN((s), &gmm_state_exception);                        \
         ogs_warn("[%s] Failure in transaction; no context "             \
-                 "restoration.",                                        \
-                 (amf_ue)->supi);                                       \
+                 "restoration.", (amf_ue)->supi);                       \
     }                                                                   \
 } while (0)
 
@@ -1300,11 +1297,11 @@ static void common_register_state(ogs_fsm_t *s, amf_event_t *e,
 
     /* If transition is from REGISTERED, allow restoration */
     if (state == GMM_COMMON_STATE_REGISTERED) {
-        amf_ue->can_restore_security_context = 1;
-        amf_backup_security_context(amf_ue, &amf_ue->sec_backup);
+        amf_ue->can_restore_context = 1;
+        amf_ue_save_memento(amf_ue, &amf_ue->memento);
     } else if (state == GMM_COMMON_STATE_DEREGISTERED) {
         /* Transition from de-registered: do not restore */
-        amf_ue->can_restore_security_context = 0;
+        amf_ue->can_restore_context = 0;
     } else
         ogs_assert_if_reached();
 

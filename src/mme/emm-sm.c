@@ -38,22 +38,19 @@
 #define OGS_LOG_DOMAIN __emm_log_domain
 
 #define MME_RESTORE_CONTEXT_ON_FAILURE(mme_ue, s) do {                  \
-    if ((mme_ue)->can_restore_security_context) {                       \
-        /* Restore security context if allowed */                       \
-        mme_restore_security_context((mme_ue),                          \
-                                     &((mme_ue)->sec_backup));          \
+    if ((mme_ue)->can_restore_context) {                                \
+        /* Restore context if allowed */                                \
+        mme_ue_restore_memento((mme_ue), &((mme_ue)->memento));  \
         (mme_ue)->security_context_available = 1;                       \
         (mme_ue)->mac_failed = 0;                                       \
         OGS_FSM_TRAN((s), &emm_state_registered);                       \
         ogs_warn("[%s] Failure in transaction; restoring context and "  \
-                 "transitioning to REGISTERED.",                        \
-                 (mme_ue)->imsi_bcd);                                   \
+                 "transitioning to REGISTERED.", (mme_ue)->imsi_bcd);   \
     } else {                                                            \
         /* Transition to exception state if not allowed */              \
         OGS_FSM_TRAN((s), &emm_state_exception);                        \
         ogs_warn("[%s] Failure in transaction; no context "             \
-                 "restoration.",                                        \
-                 (mme_ue)->imsi_bcd);                                   \
+                 "restoration.", (mme_ue)->imsi_bcd);                   \
     }                                                                   \
 } while (0)
 
@@ -325,11 +322,11 @@ static void common_register_state(ogs_fsm_t *s, mme_event_t *e,
 
     /* If transition is from REGISTERED, allow restoration */
     if (state == EMM_COMMON_STATE_REGISTERED) {
-        mme_ue->can_restore_security_context = 1;
-        mme_backup_security_context(mme_ue, &mme_ue->sec_backup);
+        mme_ue->can_restore_context = 1;
+        mme_ue_save_memento(mme_ue, &mme_ue->memento);
     } else if (state == EMM_COMMON_STATE_DEREGISTERED) {
         /* Transition from de-registered: do not restore */
-        mme_ue->can_restore_security_context = 0;
+        mme_ue->can_restore_context = 0;
     }
 
     switch (e->id) {
